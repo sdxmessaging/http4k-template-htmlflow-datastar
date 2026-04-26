@@ -165,7 +165,11 @@ fun main() {
             }
         },
         // HTTP: serve the page
-        "/" bind GET to { Response(OK).body(searchPageRenderer(SearchPage)) },
+        "/" bind GET to {
+            Response(OK)
+                .header("Content-Type", "text/html; charset=utf-8")
+                .body(searchPageRenderer(SearchPage))
+        },
     )
 
     app.asServer(Helidon(8080)).start()

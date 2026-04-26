@@ -84,7 +84,11 @@ val counterView = view<CounterPage> {
 val counterRenderer = counterView.renderer()
 
 fun main() {
-    val app = routes("/" bind GET to { Response(OK).body(counterRenderer(CounterPage)) })
+    val app = routes("/" bind GET to {
+        Response(OK)
+            .header("Content-Type", "text/html; charset=utf-8")
+            .body(counterRenderer(CounterPage))
+    })
     app.asServer(Helidon(8080)).start()
     println("Counter running at http://localhost:8080")
 }
