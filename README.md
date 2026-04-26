@@ -115,6 +115,45 @@ button {
 
 Available modifiers: `debounce(ms)`, `throttle(ms)`, `once()`, `prevent()`, `stop()`, `capture()`, `self()`, `window()`, `document()`.
 
+### Fragments (SSE Patch-Elements)
+
+Build HTML fragments for Datastar's SSE `patch-elements` events using the type-safe DSL instead of raw strings:
+
+```kotlin
+// One-off fragment
+val element = fragment {
+    div {
+        attrId("progress-log")
+        attrClass("log-area")
+        dataClass("has-content", "\$running")
+        text(logContent)
+    }
+}
+sse.sendPatchElements(element)
+
+// Or use the SSE convenience directly
+sse.sendPatchFragment {
+    div { attrId("status"); dataText("\$message") }
+}
+```
+
+For reusable typed fragments with a model:
+
+```kotlin
+data class ProgressModel(val content: String) : ViewModel
+
+val progressFragment: HtmlView<ProgressModel> = view {
+    div {
+        attrId("progress-log")
+        attrClass("log-area has-content")
+        dyn { model: ProgressModel -> text(model.content) }
+    }
+}
+
+// In SSE handler:
+sse.sendPatchFragment(progressFragment, ProgressModel("Searching..."))
+```
+
 ## Design Principles
 
 **Datastar's vocabulary is the API.** Every function name, parameter, and concept maps directly to Datastar's own documentation. When Datastar adds a new plugin, the DSL mapping should be obvious. When you read the Kotlin code, you should be able to mentally translate it to the HTML `data-*` attributes without thinking.
@@ -133,9 +172,10 @@ Available modifiers: `debounce(ms)`, `throttle(ms)`, `once()`, `prevent()`, `sto
 - [x] **Typed signals** — `val count = signal("count", 0)` with `Signal<T>` references usable in plugin functions: `dataText(count)`, `dataClass("active", count)`, `dataBind(count)`, `dataSignals(count, name, loading)`
 - [x] **Expression composition** — `count.expr gt 0`, `!loading.expr and post("/save")`, `search.expr.isEmpty()`, `dark.expr.ternary("dark", "light")`
 
+- [x] **Fragment helpers** — `fragment { div { ... } }` renders HtmlFlow DSL to Datastar `Element` for SSE patch-elements. Typed views via `HtmlView<T>.toElement(model)`. SSE convenience: `sse.sendPatchFragment { ... }`
+
 ### Next
 
-- [ ] **Fragment helpers** — `renderFragment { div { ... } }` returning a Datastar `Element` for use with http4k's `sendPatchElements`
 - [ ] **Worked examples** — port Datastar's own examples (Active Search, Click to Edit, etc.) using this DSL + http4k, with side-by-side comparison to raw HTML
 - [ ] **Publishing** — Maven Central publication under `com.sdxmessaging`
 

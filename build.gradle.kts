@@ -12,7 +12,7 @@ repositories {
 }
 
 object Versions {
-    const val HTTP4K = "6.33.0.0"
+    const val HTTP4K = "6.43.0.0"
     const val JUNIT = "6.0.3"
     const val KOTEST = "6.1.5"
 }
@@ -20,6 +20,7 @@ object Versions {
 dependencies {
     // The two modules we bridge
     api("org.http4k:http4k-template-htmlflow:${Versions.HTTP4K}")
+    api("org.http4k:http4k-web-datastar:${Versions.HTTP4K}")
 
     // Testing
     testImplementation("org.junit.jupiter:junit-jupiter-engine:${Versions.JUNIT}")
