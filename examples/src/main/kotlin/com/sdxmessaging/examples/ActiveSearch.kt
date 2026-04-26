@@ -10,6 +10,8 @@ import org.http4k.core.Method.GET
 import org.http4k.core.Request
 import org.http4k.core.Response
 import org.http4k.core.Status.Companion.OK
+import org.http4k.lens.Query
+import org.http4k.lens.DATASTAR_MODEL
 import org.http4k.routing.bind
 import org.http4k.routing.poly
 import org.http4k.sse.SseResponse
@@ -158,7 +160,12 @@ fun main() {
         // SSE: search and return results fragment
         "/search" sseBind { req: Request ->
             SseResponse { sse ->
-                val query = req.uri.query?.substringAfter("search=")?.substringBefore("&") ?: ""
+                // Datastar sends signals as JSON in the "datastar" query parameter
+                val signalsJson = Query.DATASTAR_MODEL(req) ?: "{}"
+                val query = signalsJson
+                    .substringAfter("\"search\":")
+                    .substringAfter("\"")
+                    .substringBefore("\"")
                 val results = searchContacts(query)
                 sse.sendPatchFragment(resultsFragment, SearchResults(results, query))
                 sse.close()
