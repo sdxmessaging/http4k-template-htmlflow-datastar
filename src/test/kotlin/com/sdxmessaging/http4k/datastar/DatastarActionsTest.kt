@@ -12,58 +12,49 @@ import org.xmlet.htmlapifaster.div
 class DatastarActionsTest : DescribeSpec({
 
     fun render(block: org.xmlet.htmlapifaster.Body<*>.() -> Unit): String =
-        StringBuilder().apply {
-            doc {
-                html {
-                    body { block() }
-                }
-            }
-        }.toString()
+        StringBuilder().apply { doc { html { body { block() } } } }.toString()
 
     describe("action expressions") {
         it("get() builds @get expression") {
-            get("/search") shouldBe "@get('/search')"
+            get("/search").js shouldBe "@get('/search')"
         }
-
         it("post() builds @post expression") {
-            post("/save") shouldBe "@post('/save')"
+            post("/save").js shouldBe "@post('/save')"
         }
-
         it("put() builds @put expression") {
-            put("/update") shouldBe "@put('/update')"
+            put("/update").js shouldBe "@put('/update')"
         }
-
         it("patch() builds @patch expression") {
-            patch("/partial") shouldBe "@patch('/partial')"
+            patch("/partial").js shouldBe "@patch('/partial')"
         }
-
         it("delete() builds @delete expression") {
-            delete("/remove") shouldBe "@delete('/remove')"
+            delete("/remove").js shouldBe "@delete('/remove')"
         }
     }
 
     describe("actions composed with dataOn") {
-        it("dataOn with post reads naturally") {
-            val html = render {
-                button { dataOn("click", post("/save")) }
-            }
-            html shouldContain """data-on:click="@post('/save')""""
+        it("post reads naturally") {
+            render { button { dataOn("click", post("/save")) } } shouldContain
+                """data-on:click="@post('/save')""""
         }
-
-        it("dataOn with get reads naturally") {
-            val html = render {
-                button { dataOn("click", get("/refresh")) }
-            }
-            html shouldContain """data-on:click="@get('/refresh')""""
+        it("get reads naturally") {
+            render { button { dataOn("click", get("/refresh")) } } shouldContain
+                """data-on:click="@get('/refresh')""""
         }
     }
 
     describe("actions composed with dataInit") {
-        it("dataInit with get reads naturally") {
-            val html = render {
-                div { dataInit(get("/load-content")) }
-            }
-            html shouldContain """data-init="@get('/load-content')""""
+        it("get reads naturally") {
+            render { div { dataInit(get("/load")) } } shouldContain
+                """data-init="@get('/load')""""
+        }
+    }
+
+    describe("actions composed with logical operators") {
+        it("not signal and action") {
+            val loading = signal("loading", false)
+            render { button { dataOn("click", !loading.expr and post("/save")) } } shouldContain
+                """data-on:click="!${'$'}loading && @post('/save')""""
         }
     }
 })

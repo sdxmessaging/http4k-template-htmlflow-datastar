@@ -7,31 +7,35 @@ Write Datastar-powered HTML in idiomatic Kotlin — every plugin, action, and mo
 ## Quick Example
 
 ```kotlin
+val search = signal("search", "")
+val loading = signal("loading", false)
+
 div {
-    dataSignals("{search: '', results: []}")
+    dataSignals(search, loading)
 
     input {
-        dataBind("search")
+        dataBind(search)
         dataOn("input") {
-            expression = get("/search")
+            expression(get("/search"))
             debounce(300)
         }
     }
 
     div {
-        dataClass("active", "\$search !== ''")
-        dataText("\$results.length + ' results'")
+        dataClass("active", search.expr.isNotEmpty())
+        dataShow(!loading.expr)
     }
 
     button {
-        dataOn("click", post("/save"))
-        dataAttr("disabled", "\$search === ''")
+        dataIndicator("loading")
+        dataOn("click", !loading.expr and post("/save"))
+        dataAttr("disabled", loading)
         text("Save")
     }
 }
 ```
 
-If you know Datastar, you already know this DSL. Every function maps 1:1 to a Datastar plugin or action.
+If you know Datastar, you already know this DSL. Every function maps 1:1 to a Datastar plugin or action. Signals are typed Kotlin values — typo a signal name and the compiler catches it.
 
 ## Status
 
@@ -123,14 +127,14 @@ Available modifiers: `debounce(ms)`, `throttle(ms)`, `once()`, `prevent()`, `sto
 
 ### Done
 
-- [x] **Core plugins** — `dataBind`, `dataOn`, `dataClass`, `dataAttr`, `dataText`, `dataShow`, `dataSignals`, `dataInit`, `dataIndicator`, `dataRef`
-- [x] **Action expressions** — `get()`, `post()`, `put()`, `patch()`, `delete()`
-- [x] **Event modifiers** — `debounce`, `throttle`, `once`, `prevent`, `stop`, `capture`, `self`, `window`, `document`
+- [x] **Core plugins** — `dataBind`, `dataOn`, `dataClass`, `dataAttr`, `dataText`, `dataShow`, `dataSignals`, `dataInit`, `dataIndicator`, `dataRef`, `dataComputed`, `dataEffect`, `dataStyle`, `dataOnIntersect`, `dataOnInterval`, `dataOnSignalPatch`, `dataIgnore`, `dataPreserveAttr`
+- [x] **Action expressions** — `get()`, `post()`, `put()`, `patch()`, `delete()` returning composable `Expression` objects
+- [x] **Event modifiers** — `debounce`, `throttle`, `delay`, `once`, `prevent`, `stop`, `capture`, `passive`, `self`, `outside`, `window`, `document`, `viewTransition`
+- [x] **Typed signals** — `val count = signal("count", 0)` with `Signal<T>` references usable in plugin functions: `dataText(count)`, `dataClass("active", count)`, `dataBind(count)`, `dataSignals(count, name, loading)`
+- [x] **Expression composition** — `count.expr gt 0`, `!loading.expr and post("/save")`, `search.expr.isEmpty()`, `dark.expr.ternary("dark", "light")`
 
 ### Next
 
-- [ ] **Typed signals** — `val count = signal("count", 0)` returning a `Signal<Int>` that can be used in expressions: `dataText(count)`, `dataClass("active", count gt 0)`
-- [ ] **Expression composition** — type-safe expression building: `not(fetching) and post("/save")` instead of raw strings
 - [ ] **Fragment helpers** — `renderFragment { div { ... } }` returning a Datastar `Element` for use with http4k's `sendPatchElements`
 - [ ] **Worked examples** — port Datastar's own examples (Active Search, Click to Edit, etc.) using this DSL + http4k, with side-by-side comparison to raw HTML
 - [ ] **Publishing** — Maven Central publication under `com.sdxmessaging`

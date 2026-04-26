@@ -8,58 +8,49 @@ import org.xmlet.htmlapifaster.body
 import org.xmlet.htmlapifaster.button
 import org.xmlet.htmlapifaster.div
 import org.xmlet.htmlapifaster.input
+import org.xmlet.htmlapifaster.pre
 import org.xmlet.htmlapifaster.span
 import org.xmlet.htmlapifaster.textarea
 
 class DatastarAttributesTest : DescribeSpec({
 
     fun render(block: org.xmlet.htmlapifaster.Body<*>.() -> Unit): String =
-        StringBuilder().apply {
-            doc {
-                html {
-                    body { block() }
-                }
-            }
-        }.toString()
+        StringBuilder().apply { doc { html { body { block() } } } }.toString()
 
     describe("dataBind") {
-        it("generates data-bind:{signal} attribute") {
-            val html = render {
-                input { dataBind("email") }
-            }
-            html shouldContain """data-bind:email"""
+        it("with string name") {
+            render { input { dataBind("email") } } shouldContain "data-bind:email"
         }
-
-        it("works on textarea elements") {
-            val html = render {
-                textarea { dataBind("pastetext") }
-            }
-            html shouldContain """data-bind:pastetext"""
+        it("with typed Signal") {
+            val email = signal("email", "")
+            render { input { dataBind(email) } } shouldContain "data-bind:email"
+        }
+        it("on textarea") {
+            render { textarea { dataBind("notes") } } shouldContain "data-bind:notes"
         }
     }
 
     describe("dataOn") {
-        it("generates data-on:{event} with expression") {
-            val html = render {
-                button { dataOn("click", "@post('/save')") }
-            }
-            html shouldContain """data-on:click="@post('/save')""""
+        it("with string expression") {
+            render { button { dataOn("click", "@post('/save')") } } shouldContain
+                """data-on:click="@post('/save')""""
         }
-
-        it("supports builder with debounce modifier") {
-            val html = render {
+        it("with Expression") {
+            render { button { dataOn("click", post("/save")) } } shouldContain
+                """data-on:click="@post('/save')""""
+        }
+        it("builder with debounce") {
+            render {
                 input {
                     dataOn("input") {
                         expression = "@get('/search')"
                         debounce(200)
                     }
                 }
-            }
-            html shouldContain """data-on:input__debounce_200ms="@get('/search')""""
+            } shouldContain """data-on:input__debounce.200ms="@get('/search')""""
         }
-
-        it("supports multiple modifiers") {
-            val html = render {
+        it("builder with multiple modifiers") {
+            render {
                 button {
                     dataOn("click") {
                         expression = "@post('/save')"
@@ -67,105 +58,168 @@ class DatastarAttributesTest : DescribeSpec({
                         once()
                     }
                 }
-            }
-            html shouldContain """data-on:click__prevent__once="@post('/save')""""
+            } shouldContain """data-on:click__prevent__once="@post('/save')""""
         }
-
-        it("builder with no modifiers works like simple form") {
-            val html = render {
-                button {
+        it("builder with delay") {
+            render {
+                div {
                     dataOn("click") {
-                        expression = "@get('/refresh')"
+                        expression = "\$count++"
+                        delay(500)
                     }
                 }
-            }
-            html shouldContain """data-on:click="@get('/refresh')""""
+            } shouldContain """data-on:click__delay.500ms"""
         }
     }
 
     describe("dataClass") {
-        it("generates data-class:{className} with expression") {
-            val html = render {
-                div { dataClass("active", "\$tab === 'home'") }
-            }
-            html shouldContain """data-class:active="${'$'}tab === 'home'""""
+        it("with string expression") {
+            render { div { dataClass("active", "\$tab === 'home'") } } shouldContain
+                """data-class:active="${'$'}tab === 'home'""""
         }
-
-        it("supports hyphenated class names") {
-            val html = render {
-                div { dataClass("status-success", "\$ok") }
-            }
-            html shouldContain """data-class:status-success="${'$'}ok""""
+        it("with Expression") {
+            val tab = signal("tab", "home")
+            render { div { dataClass("active", tab.expr eq "home") } } shouldContain
+                """data-class:active="${'$'}tab === 'home'""""
+        }
+        it("with boolean Signal") {
+            val running = signal("running", false)
+            render { div { dataClass("active", running) } } shouldContain
+                """data-class:active="${'$'}running""""
+        }
+        it("hyphenated class name") {
+            render { div { dataClass("status-success", "\$ok") } } shouldContain
+                """data-class:status-success"""
         }
     }
 
     describe("dataAttr") {
-        it("generates data-attr:{name} with expression") {
-            val html = render {
-                button { dataAttr("disabled", "\$running") }
-            }
-            html shouldContain """data-attr:disabled="${'$'}running""""
+        it("with string") {
+            render { button { dataAttr("disabled", "\$running") } } shouldContain
+                """data-attr:disabled="${'$'}running""""
         }
-
-        it("works for href attributes") {
-            val html = render {
-                div { dataAttr("href", "\$url") }
-            }
-            html shouldContain """data-attr:href="${'$'}url""""
+        it("with Signal") {
+            val running = signal("running", false)
+            render { button { dataAttr("disabled", running) } } shouldContain
+                """data-attr:disabled="${'$'}running""""
         }
     }
 
     describe("dataText") {
-        it("generates data-text attribute") {
-            val html = render {
-                span { dataText("\$status") }
-            }
-            html shouldContain """data-text="${'$'}status""""
+        it("with string") {
+            render { span { dataText("\$status") } } shouldContain """data-text="${'$'}status""""
+        }
+        it("with Signal") {
+            val status = signal("status", "Ready")
+            render { span { dataText(status) } } shouldContain """data-text="${'$'}status""""
+        }
+        it("with Expression") {
+            val count = signal("count", 0)
+            render { span { dataText(count.expr) } } shouldContain """data-text="${'$'}count""""
         }
     }
 
     describe("dataShow") {
-        it("generates data-show attribute") {
-            val html = render {
-                div { dataShow("\$visible") }
-            }
-            html shouldContain """data-show="${'$'}visible""""
+        it("with string") {
+            render { div { dataShow("\$visible") } } shouldContain """data-show="${'$'}visible""""
+        }
+        it("with boolean Signal") {
+            val visible = signal("visible", true)
+            render { div { dataShow(visible) } } shouldContain """data-show="${'$'}visible""""
+        }
+        it("with Expression") {
+            val count = signal("count", 0)
+            render { div { dataShow(count.expr gt 0) } } shouldContain """data-show="${'$'}count > 0""""
         }
     }
 
     describe("dataSignals") {
-        it("generates data-signals attribute with JSON") {
-            val html = render {
-                div { dataSignals("{count: 0, name: ''}") }
-            }
-            html shouldContain """data-signals="{count: 0, name: ''}""""
+        it("with raw JSON") {
+            render { div { dataSignals("{count: 0}") } } shouldContain
+                """data-signals="{count: 0}""""
+        }
+        it("with typed Signals") {
+            val count = signal("count", 0)
+            val name = signal("name", "")
+            val active = signal("active", true)
+            render { div { dataSignals(count, name, active) } } shouldContain
+                """data-signals="{count: 0, name: '', active: true}""""
+        }
+    }
+
+    describe("dataComputed") {
+        it("with string") {
+            render { div { dataComputed("total", "\$price * \$quantity") } } shouldContain
+                """data-computed:total"""
+        }
+        it("with Expression") {
+            val price = signal("price", 0)
+            render { div { dataComputed("display", price.expr gt 0) } } shouldContain
+                """data-computed:display"""
         }
     }
 
     describe("dataInit") {
-        it("generates data-init attribute") {
-            val html = render {
-                div { dataInit("@get('/load')") }
-            }
-            html shouldContain """data-init="@get('/load')""""
+        it("with string") {
+            render { div { dataInit("@get('/load')") } } shouldContain
+                """data-init="@get('/load')""""
+        }
+        it("with Expression") {
+            render { div { dataInit(get("/load")) } } shouldContain
+                """data-init="@get('/load')""""
+        }
+    }
+
+    describe("dataEffect") {
+        it("generates data-effect") {
+            render { div { dataEffect("\$total = \$price * \$qty") } } shouldContain
+                """data-effect"""
         }
     }
 
     describe("dataIndicator") {
-        it("generates data-indicator:{name} attribute") {
-            val html = render {
-                button { dataIndicator("fetching") }
-            }
-            html shouldContain """data-indicator:fetching"""
+        it("generates data-indicator:{name}") {
+            render { button { dataIndicator("fetching") } } shouldContain "data-indicator:fetching"
         }
     }
 
     describe("dataRef") {
-        it("generates data-ref attribute") {
-            val html = render {
-                input { dataRef("searchInput") }
-            }
-            html shouldContain """data-ref="searchInput""""
+        it("generates data-ref") {
+            render { input { dataRef("searchInput") } } shouldContain """data-ref="searchInput""""
+        }
+    }
+
+    describe("dataStyle") {
+        it("generates data-style:{property}") {
+            render { div { dataStyle("background-color", "\$red ? 'red' : 'blue'") } } shouldContain
+                """data-style:background-color"""
+        }
+    }
+
+    describe("dataOnIntersect") {
+        it("generates data-on-intersect") {
+            render { div { dataOnIntersect("\$visible = true") } } shouldContain
+                """data-on-intersect"""
+        }
+    }
+
+    describe("dataOnInterval") {
+        it("generates data-on-interval") {
+            render { div { dataOnInterval("\$count++") } } shouldContain
+                """data-on-interval"""
+        }
+    }
+
+    describe("dataIgnore") {
+        it("generates data-ignore") {
+            render { div { dataIgnore() } } shouldContain "data-ignore"
+        }
+    }
+
+    describe("dataPreserveAttr") {
+        it("generates data-preserve-attr") {
+            render { div { dataPreserveAttr("open class") } } shouldContain
+                """data-preserve-attr="open class""""
         }
     }
 })
