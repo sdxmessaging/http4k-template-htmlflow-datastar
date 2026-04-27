@@ -43,16 +43,15 @@ If you know Datastar, you already know this DSL. Every function maps 1:1 to a Da
 
 ## Installation
 
+Available on [Maven Central](https://central.sonatype.com/artifact/com.sdxmessaging/http4k-template-htmlflow-datastar):
+
 ```kotlin
 dependencies {
-    implementation(platform("org.http4k:http4k-bom:<version>"))
-    implementation("org.http4k:http4k-template-htmlflow")
-    implementation("org.http4k:http4k-web-datastar")
-
-    // This module (once published):
-    implementation("com.sdxmessaging:http4k-template-htmlflow-datastar:<version>")
+    implementation("com.sdxmessaging:http4k-template-htmlflow-datastar:0.1.0")
 }
 ```
+
+The http4k HtmlFlow and Datastar modules are pulled in transitively.
 
 ## API Reference
 
@@ -177,7 +176,7 @@ sse.sendPatchFragment(progressFragment, ProgressModel("Searching..."))
 ### Next
 
 - [ ] **Worked examples** — port Datastar's own examples (Active Search, Click to Edit, etc.) using this DSL + http4k, with side-by-side comparison to raw HTML
-- [ ] **Publishing** — Maven Central publication under `com.sdxmessaging`
+- [ ] **CI publishing** — GitHub Action to publish to Maven Central on tag push (GPG key and Sonatype token as repository secrets)
 
 ## Background
 
